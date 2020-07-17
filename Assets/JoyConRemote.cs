@@ -13,10 +13,13 @@ public class JoyConRemote: MonoBehaviour
 
     // Values made available via Unity
     public float[] stick;
+    public UnityEngine.UI.Text debugTxt;
     public Vector3 gyro;
     public Vector3 accel;
     public int jc_ind = 0;
     public Quaternion orientation;
+    public Quaternion adj = Quaternion.identity;
+    public Quaternion lastOne = Quaternion.identity;
     NetworkStream stream;
     //SERVER
     #region private members 	
@@ -36,9 +39,13 @@ public class JoyConRemote: MonoBehaviour
     bool canUpdate = false;
     #endregion
 
+    public bool connected = false;
+    public bool joyconConnected;
+
     // Use this for initialization
     void Start()
     {
+        adj = Quaternion.identity;
         // Start TcpServer background thread 		
         tcpListenerThread = new Thread(new ThreadStart(ListenForIncommingRequests));
         tcpListenerThread.IsBackground = true;
@@ -54,18 +61,35 @@ public class JoyConRemote: MonoBehaviour
         }
     }
 
+    string DebugString()
+    {
+        return ""+BR(orientation.w) +","+ BR(orientation.x) +","+ BR(orientation.y) +","+ BR(orientation.z)+"\n"+(1/Time.fixedDeltaTime)+"\n"+joyconConnected.ToString()+"\n"+connected.ToString();
+    }
+
     // Update is called once per frame
     void Update()
     {
         if (joycons.Count > 0)
+        {
             orientation = joycons[jc_ind].GetVector();
+            joyconConnected = true;
+        }
         else
-            orientation = transform.rotation;
-        //orientation *= Quaternion.AngleAxis(90, new Vector3(1, 0, 0));
-        transform.rotation = orientation;
+        {
+            orientation = transform.localRotation;
+            joyconConnected = false;
+        }
+        if (joycons[jc_ind].GetButton(Joycon.Button.STICK))
+        {
+            adj = Quaternion.Inverse(orientation);
+        }
+        transform.localRotation = adj*orientation*lastOne*Quaternion.AngleAxis(-Time.fixedDeltaTime * 90 / 12, new Vector3(0, 1, 0));
+        lastOne *= Quaternion.AngleAxis(-Time.fixedDeltaTime * 90 / 5,new Vector3(0, 1, 0));
+        orientation = transform.localRotation;
         if (connectedTcpClient != null&&!canUpdate)
         {
             Debug.Log("<Socket> Connected!");
+            connected = true;
             stream = connectedTcpClient.GetStream();
             canUpdate = true;
         }
@@ -73,6 +97,7 @@ public class JoyConRemote: MonoBehaviour
         {
             SendMessage();
         }
+        debugTxt.text = DebugString();
     }
 
     /// <summary> 	
@@ -138,7 +163,7 @@ public class JoyConRemote: MonoBehaviour
                 //Debug.Log("x" + orientation.x);
                 //Debug.Log("y" + orientation.y);
                 //Debug.Log("z" + orientation.z);
-                string serverMessage = orientation.w.ToString() + "," + orientation.x.ToString() + "," + orientation.y.ToString() + "," + orientation.z.ToString();
+                string serverMessage = orientation.w.ToString() + "," + orientation.x.ToString() + "," + orientation.y.ToString() + "," + orientation.z.ToString() + "," + (joycons[jc_ind].GetButtonDown(Joycon.Button.SHOULDER_2)?1:0);
                 // Convert string message to byte array.
                 Debug.Log(serverMessage);
                 byte[] serverMessageAsByteArray = Encoding.ASCII.GetBytes(serverMessage);
@@ -155,5 +180,9 @@ public class JoyConRemote: MonoBehaviour
     public void OnApplicationQuit()
     {
         tcpListener.Stop();
+    }
+    public float BR(float i)
+    {
+        return Mathf.Round(i * 100) / 100;
     }
 }
