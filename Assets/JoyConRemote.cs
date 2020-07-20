@@ -82,9 +82,10 @@ public class JoyConRemote: MonoBehaviour
         if (joycons[jc_ind].GetButton(Joycon.Button.STICK))
         {
             adj = Quaternion.Inverse(orientation);
+            lastOne = Quaternion.identity;
         }
-        transform.localRotation = adj*orientation*lastOne*Quaternion.AngleAxis(-Time.fixedDeltaTime * 90 / 12, new Vector3(0, 1, 0));
-        lastOne *= Quaternion.AngleAxis(-Time.fixedDeltaTime * 90 / 5,new Vector3(0, 1, 0));
+        transform.localRotation = adj*orientation*lastOne*Quaternion.AngleAxis(-Time.fixedDeltaTime * 90 / 13, new Vector3(0, 1, 0));
+        lastOne *= Quaternion.AngleAxis(-Time.fixedDeltaTime * 90 / 13,new Vector3(0, 1, 0));
         orientation = transform.localRotation;
         if (connectedTcpClient != null&&!canUpdate)
         {
