@@ -164,7 +164,7 @@ public class JoyConRemote: MonoBehaviour
                 //Debug.Log("x" + orientation.x);
                 //Debug.Log("y" + orientation.y);
                 //Debug.Log("z" + orientation.z);
-                string serverMessage = orientation.w.ToString() + "," + orientation.x.ToString() + "," + orientation.y.ToString() + "," + orientation.z.ToString() + "," + (joycons[jc_ind].GetButtonDown(Joycon.Button.SHOULDER_2)?1:0);
+                string serverMessage = orientation.w.ToString() + "," + orientation.x.ToString() + "," + orientation.y.ToString() + "," + orientation.z.ToString() + "," + (joycons[jc_ind].GetButtonDown(Joycon.Button.SHOULDER_2)?1:0) + (joycons[jc_ind].GetButtonDown(Joycon.Button.SHOULDER_1) ? 1 : 0) + (joycons[jc_ind].GetButtonDown(Joycon.Button.PLUS) ? 1 : 0) + (joycons[jc_ind].GetStick()[0]) + (joycons[jc_ind].GetStick()[1]);
                 // Convert string message to byte array.
                 Debug.Log(serverMessage);
                 byte[] serverMessageAsByteArray = Encoding.ASCII.GetBytes(serverMessage);
